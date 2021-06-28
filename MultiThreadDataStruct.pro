@@ -8,4 +8,5 @@ SOURCES += main.cpp
 LIBS += -lpthread
 
 HEADERS += \
-    linklistqueue.h
+    linklistqueue.h \
+    LockBuffer.h

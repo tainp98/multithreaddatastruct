@@ -120,7 +120,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/exceptions.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
-		../../MultiThreadDataStruct.pro linklistqueue.h ../main.cpp
+		../../MultiThreadDataStruct.pro linklistqueue.h \
+		LockBuffer.h ../main.cpp
 QMAKE_TARGET  = MultiThreadDataStruct
 DESTDIR       = 
 TARGET        = MultiThreadDataStruct
@@ -314,7 +315,7 @@ compiler_clean:
 
 ####### Compile
 
-main.o: ../main.cpp 
+main.o: ../main.cpp ../LockBuffer.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../main.cpp
 
 ####### Install

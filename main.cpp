@@ -4,6 +4,14 @@
 #include <mutex>
 #include <condition_variable>
 #include <stdio.h>
+#include <atomic>
+#include <assert.h>
+#include "LockBuffer.h"
+#include <memory>
+#include <chrono>
+#include <cstring>
+
+
 using namespace std;
 
 template<typename T>
@@ -19,7 +27,7 @@ public:
     }
 
     void push(T new_value){
-        std:;shared_ptr<T> data(std::make_shared<T>(std::move(new_value)));
+        std::shared_ptr<T> data(std::make_shared<T>(std::move(new_value)));
         std::lock_guard<std::mutex> lk(mut);
         data_queue.push(data);
         data_cond.notify_one();
@@ -79,24 +87,59 @@ public:
     std::shared_ptr<int> p = std::make_shared<int>(43);
 };
 
+//std::atomic<long long> data{10};
+std::array<long long, 5> return_values{};
+std::atomic_int32_t data{10};
+
+
+
+void do_work(int thread_num){
+    long long value = data.fetch_add(1, std::memory_order_relaxed);
+    return_values[thread_num] = value;
+}
 int main()
 {
-    Class1 c1;
-    threadsafe_queue<Class1> myqueue;
-    printf("address of object c1 = %p\n", &c1);
+//    Mat_<int> m1(480, 640, Mat_<int>::format::GRAY);
+//    int *data, *data1;
+//    data = (int*)malloc(640*480*sizeof(int));
+//    data1 = (int*)malloc(640*480*sizeof(int));
+//    for(int i = 0; i < 480; i++){
+//        for(int j = 0; j < 640; j++){
+//            data[i*640 + j] = i+j;
+//        }
+//    }
+//    chrono::high_resolution_clock::time_point start, stop;
+//    start = chrono::high_resolution_clock::now();
+////    memcpy(data, img.data, img.rows*img.cols*sizeof(unsigned char));
 
-    myqueue.push(c1);
-    Class1 c2;
-    printf("address of object c2 = %p\n", &c2);
-    myqueue.wait_and_pop(c2);
-    std::shared_ptr<Class1> c3 = myqueue.wait_and_pop();
+//    std::memcpy(m1.Ptr, data, 640*480*sizeof(int));
+//    stop = chrono::high_resolution_clock::now();
+//    cout << "memcpy time = " << chrono::duration_cast<chrono::microseconds>(stop - start).count() << endl;
+//    cout << "size_ Mat_ = " << m1.size_ << endl;
 
-    printf("address of object c3 = %p\n", c3.get());
-    std::cout << c3.use_count() << "\n";
-    printf("address of shared_ptr c3 = %p\n", &c3);
-    printf("address of object c1 = %p\n", &c1);
+    Mat_<unsigned char>* m2;
+    LockBuffer<Mat_<unsigned char>> buf(1,2, 10);
 
-//    c2 = std::move(c1);
-    std::cout << *c1.p << "\n";
+//    std::cout << data.is_lock_free() << endl;
+//    assert(data.is_lock_free());
+//    std::thread th0{do_work, 0};
+//    std::thread th1{do_work, 1};
+//    std::thread th2{do_work, 2};
+//    std::thread th3{do_work, 3};
+//    std::thread th4{do_work, 4};
+//    th0.join();
+//    th1.join();
+//    th2.join();
+//    th3.join();
+//    th4.join();
+
+//    std::cout << "Result : " << data << '\n';
+
+//      for (long long val : return_values) {
+//          std::cout << "Seen return value : " << val << std::endl;
+//      }
+
+
+
     return 0;
 }
