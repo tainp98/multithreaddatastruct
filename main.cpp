@@ -1,6 +1,7 @@
 #include <iostream>
 #include <queue>
 #include <thread>
+
 #include <mutex>
 #include <condition_variable>
 #include <stdio.h>
@@ -117,8 +118,46 @@ int main()
 //    cout << "memcpy time = " << chrono::duration_cast<chrono::microseconds>(stop - start).count() << endl;
 //    cout << "size_ Mat_ = " << m1.size_ << endl;
 
-    Mat_<unsigned char>* m2;
-    LockBuffer<Mat_<unsigned char>> buf(1,2, 10);
+//    Mat_<unsigned char>* m2;
+
+    LockBuffer<Mat_<unsigned char>> buf(10, 1, 2);
+    {
+    Mat_<unsigned char> t(100, 100);
+    buf.Allocator(std::move(t));
+    }
+//
+    buf.Allocator(Mat_<unsigned char>(100,100));
+
+//    cout << "size_ t = " << t.size_ << "\n";
+    std::cout << "=======\n";
+    std::this_thread::sleep_for(chrono::milliseconds(1000));
+    {
+
+    }
+
+
+//    std::unique_ptr<Mat_<unsigned char>[]> arr(new Mat_<unsigned char>[10]);
+//    std::unique_ptr<Mat_<unsigned char>[]> arr1, arr2;
+//    Mat_<unsigned char> m1;
+//    m1 = Mat_<unsigned char>(100, 100);
+//    for(int i = 0; i < 10; i++){
+
+//        arr[i] = m1;
+//    }
+////    arr1 = std::make_unique<Mat_<unsigned char>[10]>();
+//    arr2 = std::move(arr);
+//    if(arr == nullptr)
+//        cout << "null\n";
+//    for(int i = 0; i < 10; i++){
+//        cout << "size_ = " << arr2[i].size_ << endl;
+//    }
+
+//    m2 = new Mat_<unsigned char>[10];
+//    arr(new Mat_<unsigned char>[10]);
+
+
+
+//    delete [] m2;
 
 //    std::cout << data.is_lock_free() << endl;
 //    assert(data.is_lock_free());
