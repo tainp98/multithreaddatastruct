@@ -250,6 +250,10 @@ public:
 
     void push(T& new_value){
         if(size_.load() >= max_size){
+            while(ref_count.load() != 0);
+//            write_pos = (read_pos + 1) % max_size;
+            buffer[write_pos] = new_value;
+            return;
 
         }
 
@@ -258,19 +262,23 @@ public:
         size_.fetch_add(1, std::memory_order_relaxed);
     }
 
-    T& front(){
+    void front(T& value){
         if(size_.load() == 0){
 
         }
-        return buffer[read_pos];
+        ref_count.fetch_add(1, std::memory_order_relaxed);
+        value = buffer[read_pos];
     }
 
     void pop(){
         if(size_.load() == 0){
 
         }
-        read_pos = (read_pos + 1) % max_size;
-        size_.fetch_sub(1, std::memory_order_relaxed);
+        ref_count.fetch_sub(1, std::memory_order_relaxed);
+        if(ref_count == 0){
+            size_.fetch_sub(1, std::memory_order_relaxed);
+            read_pos = (read_pos + 1) % max_size;
+        }
     }
 
 
