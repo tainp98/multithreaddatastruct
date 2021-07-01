@@ -11,6 +11,8 @@
 #include <memory>
 #include <chrono>
 #include <cstring>
+#include <array>
+#include <vector>
 
 
 using namespace std;
@@ -98,6 +100,14 @@ void do_work(int thread_num){
     long long value = data.fetch_add(1, std::memory_order_relaxed);
     return_values[thread_num] = value;
 }
+
+int create_read_pos(){
+    return 0;
+}
+
+void push(int& value){
+    value = (value+1) %10;
+}
 int main()
 {
 //    Mat_<int> m1(480, 640, Mat_<int>::format::GRAY);
@@ -121,19 +131,38 @@ int main()
 //    Mat_<unsigned char>* m2;
 
     LockBuffer<Mat_<unsigned char>> buf(10, 1, 2);
-    {
-    Mat_<unsigned char> t(100, 100);
-    buf.Allocator(std::move(t));
-    }
 //
     buf.Allocator(Mat_<unsigned char>(100,100));
 
 //    cout << "size_ t = " << t.size_ << "\n";
     std::cout << "=======\n";
-    std::this_thread::sleep_for(chrono::milliseconds(1000));
-    {
-
+    std::array<std::atomic<int>, 10> arr={};
+    for(int i = 0; i < arr.size(); i++){
+        arr[i].store(0);
     }
+    for(int i = 0; i < arr.size(); i++){
+        arr[i].fetch_add(1);
+    }
+    arr[1].fetch_add(1);
+    for(int i = 0; i < arr.size(); i++){
+        std::cout << "arr[" << i << "] = " << arr[i] << endl;
+    }
+
+    int i = 0;
+    cout << "arr[i] = " << arr[++i] << endl;
+    cout << "i = " << i << endl;
+    vector<int> a;
+
+    int read_pos = create_read_pos();
+    push(read_pos);
+    cout << "read_pos = " << read_pos << endl;
+    push(read_pos);
+    cout << "read_pos = " << read_pos << endl;
+    push(read_pos);
+    cout << "read_pos = " << read_pos << endl;
+    push(read_pos);
+    cout << "read_pos = " << read_pos << endl;
+
 
 
 //    std::unique_ptr<Mat_<unsigned char>[]> arr(new Mat_<unsigned char>[10]);

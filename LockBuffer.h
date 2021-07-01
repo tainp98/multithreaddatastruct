@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <exception>
+#include <array>
 
 template<typename T>
 class Mat_ {
@@ -212,12 +213,12 @@ public:
     int cols{0};
 };
 
-template<typename T>
+template<typename T, int max_size>
 class LockBuffer{
 public:
     LockBuffer() = default;
     LockBuffer(int _max_size, int _in, int _out)
-        : max_size(_max_size), n_in(_in), n_out(_out), read_pos{0}, write_pos{0}, ref_count{0}, size_{0}
+        : n_in(_in), n_out(_out), read_pos{0}, write_pos{0}, ref_count{0}, size_{0}
     {
         assert(size_.is_lock_free());
         assert(ref_count.is_lock_free());
@@ -250,48 +251,82 @@ public:
 
     void push(T& new_value){
         if(size_.load() >= max_size){
-            while(ref_count.load() != 0);
-//            write_pos = (read_pos + 1) % max_size;
-            buffer[write_pos] = new_value;
+            if(readers_active[previous_write_pos] > 0){
+                return;
+            }
+            else{
+                writers_active[previous_write_pos].fetch_add(1);
+                buffer[previous_write_pos] = new_value;
+                writers_active[previous_write_pos].fetch_sub(1);
+            }
             return;
-
         }
+        while(readers_active[write_pos].load() > 0){
+            write_pos = (write_pos + 1) % max_size;
+            // some threads are still reading this write_pos mem
+            // check next postion to push
+        }
+        // lock while writer push data
+        // critical section
+        writers_active[write_pos].fetch_add(1);
 
         buffer[write_pos] = new_value;
+        previous_write_pos = write_pos;
         write_pos = (write_pos + 1) % max_size;
+        // end of critical section
+        // free writers lock
+        writers_active[previous_write_pos].fetch_sub(1);
         size_.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void front(T& value){
-        if(size_.load() == 0){
+    void front(T& value, int& read_pos){
+        while(size_.load() == 0){
 
         }
-        ref_count.fetch_add(1, std::memory_order_relaxed);
+        while(writers_active[read_pos].load() > 0);
+        readers_active[read_pos].fetch_add(1);
         value = buffer[read_pos];
     }
 
-    void pop(){
-        if(size_.load() == 0){
-
+    void pop(int& read_pos){
+        if(readers_active[read_pos].load() == n_out){
+            readers_active[read_pos].store(0);
+            size_.fetch_sub(1);
         }
-        ref_count.fetch_sub(1, std::memory_order_relaxed);
-        if(ref_count == 0){
-            size_.fetch_sub(1, std::memory_order_relaxed);
-            read_pos = (read_pos + 1) % max_size;
-        }
+        read_pos = (read_pos + 1) % max_size;
     }
 
+    void createReadPos(int& read_pos){
+        read_pos = 0;
+    }
 
+    int createReadPos(){
+        return 0;
+    }
 
+    void getLastestValue(T& value){
+        while(size_.load() == 0){
+        }
+        while(writers_active[previous_write_pos] > 0){
+        }
+        readers_active[previous_write_pos].fetch_add(1);
+        value = buffer[previous_write_pos];
+        readers_active[previous_write_pos].fetch_sub(1);
+    }
 private:
-    size_t read_pos = 0;
     size_t write_pos = 0;
+    size_t read_pos = 0;
+    size_t previous_write_pos = 0;
     int n_in, n_out;
-    int max_size;
-    std::atomic<size_t> ref_count{0};
+//    int max_size;
     std::atomic<size_t> size_{0};
 //    std::shared_ptr<Mat_<unsigned char>> buffer[N];
     std::unique_ptr<T[]> buffer;
+    std::array<std::atomic<int>, max_size> readers_active;
+    std::array<std::atomic<int>, max_size> writers_active;
+//    int read_pos[5];
+//    int write_pos[5];
+
 //    std::unique_ptr<T> buffer[N];
 //    std::unique_ptr<Mat_<unsigned char>[]> arr(new Mat_<unsigned char>[10]);
 //    std::shared_ptr<T> buffer[N];
