@@ -249,51 +249,61 @@ public:
 
     }
 
-    void push(T& new_value){
+    // check readers_active and push data
+    // continue push to next place if buffer is full
+    // this case, multi readers must wait and until they completely read a same place
+    void push1(T& new_value){
         if(size_.load() >= max_size){
-            if(readers_active[previous_write_pos] > 0){
+            if(readers_active[latest_write_pos] > 0){
                 return;
             }
             else{
-                writers_active[previous_write_pos].fetch_add(1);
-                buffer[previous_write_pos] = new_value;
-                writers_active[previous_write_pos].fetch_sub(1);
+                writers_active[latest_write_pos].fetch_add(1);
+                buffer[latest_write_pos] = new_value;
+                writers_active[latest_write_pos].fetch_sub(1);
             }
             return;
         }
-        while(readers_active[write_pos].load() > 0){
-            write_pos = (write_pos + 1) % max_size;
-            // some threads are still reading this write_pos mem
-            // check next postion to push
-        }
+//        while(readers_active[write_pos].load() > 0){
+//            write_pos = (write_pos + 1) % max_size;
+//            // some threads are still reading this write_pos mem
+//            // check next postion to push
+//        }
         // lock while writer push data
         // critical section
         writers_active[write_pos].fetch_add(1);
 
         buffer[write_pos] = new_value;
-        previous_write_pos = write_pos;
+        latest_write_pos = write_pos;
         write_pos = (write_pos + 1) % max_size;
         // end of critical section
         // free writers lock
-        writers_active[previous_write_pos].fetch_sub(1);
+        writers_active[latest_write_pos].fetch_sub(1);
         size_.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void front(T& value, int& read_pos){
+    // multi readers must read same data at the same time
+    // they share the same read_pos
+    void front1(T& value, int& r_pos){
         while(size_.load() == 0){
 
         }
         while(writers_active[read_pos].load() > 0);
+        while(r_pos == read_pos);
         readers_active[read_pos].fetch_add(1);
         value = buffer[read_pos];
+        r_pos = read_pos;
+        //read_flag.store(false);
     }
-
-    void pop(int& read_pos){
+    // pop1 correspond to front1
+    void pop1(){
         if(readers_active[read_pos].load() == n_out){
             readers_active[read_pos].store(0);
             size_.fetch_sub(1);
+            read_pos = (read_pos + 1) % max_size;
+           // read_flag.store(true);
         }
-        read_pos = (read_pos + 1) % max_size;
+
     }
 
     void createReadPos(int& read_pos){
@@ -304,22 +314,24 @@ public:
         return 0;
     }
 
-    void getLastestValue(T& value){
-        while(size_.load() == 0){
+    // multi readers can read difference data at the same time
+    void getLastestValue(T& value, int& read_pos){
+        while(read_pos == latest_write_pos);
+        read_pos = latest_write_pos;
+        while(writers_active[read_pos] > 0){
         }
-        while(writers_active[previous_write_pos] > 0){
-        }
-        readers_active[previous_write_pos].fetch_add(1);
-        value = buffer[previous_write_pos];
-        readers_active[previous_write_pos].fetch_sub(1);
+        readers_active[read_pos].fetch_add(1);
+        value = buffer[read_pos];
+        readers_active[read_pos].fetch_sub(1);
     }
 private:
-    size_t write_pos = 0;
-    size_t read_pos = 0;
-    size_t previous_write_pos = 0;
+    int write_pos = 0;
+    int read_pos = 0;
+    int latest_write_pos = -1;
     int n_in, n_out;
 //    int max_size;
-    std::atomic<size_t> size_{0};
+    std::atomic<int> size_{0};
+    std::atomic_bool read_flag = true;
 //    std::shared_ptr<Mat_<unsigned char>> buffer[N];
     std::unique_ptr<T[]> buffer;
     std::array<std::atomic<int>, max_size> readers_active;
