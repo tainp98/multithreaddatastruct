@@ -3,10 +3,21 @@ CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    testLockBuff.cpp
 
 LIBS += -lpthread
 
 HEADERS += \
     linklistqueue.h \
-    LockBuffer.h
+    LockBuffer.h \
+    Matrix.h \
+    Writer.h \
+    Reader1.h \
+    Reader2.h
+
+## opencv  4
+LIBS += `pkg-config --libs opencv4`
+INCLUDEPATH += /usr/local/include/opencv4
+#============ pthread
+LIBS += -lpthread

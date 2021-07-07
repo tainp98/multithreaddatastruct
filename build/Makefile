@@ -15,7 +15,7 @@ CXX           = g++
 DEFINES       = -DQT_QML_DEBUG
 CFLAGS        = -pipe -g -Wall -W -fPIC $(DEFINES)
 CXXFLAGS      = -pipe -g -std=gnu++1y -Wall -W -fPIC $(DEFINES)
-INCPATH       = -I../../MultiThreadDataStruct -I. -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
+INCPATH       = -I../../MultiThreadDataStruct -I. -isystem /usr/local/include/opencv4 -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
 QMAKE         = /usr/lib/qt5/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -38,7 +38,7 @@ DISTNAME      = MultiThreadDataStruct1.0.0
 DISTDIR = /home/tainp/workspace/MultiThreadDataStruct/build/.tmp/MultiThreadDataStruct1.0.0
 LINK          = g++
 LFLAGS        = 
-LIBS          = $(SUBLIBS) -lpthread 
+LIBS          = $(SUBLIBS) `pkg-config --libs opencv4` -lpthread 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -50,8 +50,10 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = ../main.cpp 
-OBJECTS       = main.o
+SOURCES       = ../main.cpp \
+		../testLockBuff.cpp 
+OBJECTS       = main.o \
+		testLockBuff.o
 DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/unix.conf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/common/linux.conf \
@@ -121,7 +123,12 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		../../MultiThreadDataStruct.pro linklistqueue.h \
-		LockBuffer.h ../main.cpp
+		LockBuffer.h \
+		Matrix.h \
+		Writer.h \
+		Reader1.h \
+		Reader2.h ../main.cpp \
+		../testLockBuff.cpp
 QMAKE_TARGET  = MultiThreadDataStruct
 DESTDIR       = 
 TARGET        = MultiThreadDataStruct
@@ -315,8 +322,15 @@ compiler_clean:
 
 ####### Compile
 
-main.o: ../main.cpp ../LockBuffer.h
+main.o: ../main.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o ../main.cpp
+
+testLockBuff.o: ../testLockBuff.cpp ../Matrix.h \
+		../LockBuffer.h \
+		../Writer.h \
+		../Reader1.h \
+		../Reader2.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o testLockBuff.o ../testLockBuff.cpp
 
 ####### Install
 
