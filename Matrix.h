@@ -39,7 +39,7 @@ class Matrix {
        create ptr
        if _opt = 0 by default --> get ptr data directly
        else --> copy if it can or get ptr data directly */
-    Matrix(int _rows, int _cols, void* data, int _opt = 0, format _fmt = format::GRAY)
+    Matrix(int _rows, int _cols, T* data, int _opt = 0, format _fmt = format::GRAY)
         : rows(_rows), cols(_cols), fmt(_fmt)
     {
         int data_size;
@@ -120,7 +120,7 @@ class Matrix {
     // Copy Assignment
     auto operator =(const Matrix& other) -> decltype(*this){
         try{
-            std::cout << "====> Copy Assignment\n";
+            printf("====> Copy Assignment\n");
             if(other.Ptr == nullptr){
                 throw std::bad_alloc();
             }
@@ -192,6 +192,57 @@ class Matrix {
             break;
         }
         Ptr = new T[size_];
+    }
+
+    void create(int _rows, int _cols, format _fmt = format::GRAY){
+        rows = _rows;
+        cols = _cols;
+        fmt = _fmt;
+        switch (fmt) {
+        case format::GRAY :
+            size_ = rows*cols;
+            break;
+        case format::YUV :
+            size_ = rows*cols*1.5;
+            break;
+        }
+        if(Ptr != nullptr)
+            delete Ptr;
+        Ptr = new T[size_];
+    }
+    /* create Matrix by a pointer
+       if _opt = 0 by default --> get ptr data directly
+       else --> copy if it can or get ptr data directly */
+    void create(int _rows, int _cols, T* data, int _opt = 0, format _fmt = format::GRAY){
+        rows = _rows;
+        cols = _cols;
+        fmt = _fmt;
+        switch (fmt) {
+        case format::GRAY :
+            size_ = rows*cols;
+            break;
+        case format::YUV :
+            size_ = rows*cols*1.5;
+            break;
+        }
+
+        if(_opt == 0){
+            if(Ptr != nullptr)
+                delete Ptr;
+            Ptr = data;
+        }
+        else{
+            if(Ptr == nullptr)
+                Ptr = new T[size_];
+            std::copy(data, data+size_, Ptr);
+        }
+    }
+
+    bool copyFrom(T* data){
+        if(size_ <= 0) return false;
+        if(Ptr == nullptr)
+            Ptr = new T[size_];
+        std::copy(data, data+size_, Ptr);
     }
 
     // overlap another allocate function

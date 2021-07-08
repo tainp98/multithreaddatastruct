@@ -3,6 +3,7 @@
 #include "Writer.h"
 #include "Reader1.h"
 #include "Reader2.h"
+#include <thread>
 
 int main(int argc, char* argv[]){
     LockBuffer<Matrix<unsigned char>> buffer(10, 1, 2);
@@ -18,12 +19,12 @@ int main(int argc, char* argv[]){
         file_name = std::string(argv[1]);
     Writer writer(buffer, file_name);
     printf("Addr Of v4l2buffer = %p\n", &writer.v4l2Buff);
-    writer.run();
+    std::thread t_writer(&Writer::run, &writer);
     Reader1 reader1(buffer);
+    std::thread t_reader1(&Reader1::run, &reader1);
     Reader2 reader2(buffer);
-    reader1.run();
-    reader2.run();
-
-
-
+    std::thread t_reader2(&Reader2::run, &reader2);
+    t_writer.join();
+    t_reader1.join();
+    t_reader2.join();
 }

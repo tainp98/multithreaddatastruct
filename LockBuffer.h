@@ -16,6 +16,10 @@ public:
         if(max_size > MAX_BUFFER_SIZE) max_size = MAX_BUFFER_SIZE;
         std::unique_ptr<T[]> arr(new T[max_size]);
         buffer = std::move(arr);
+        for(int i = 0; i < MAX_BUFFER_SIZE; i++){
+            readers_active[i].store(0);
+            writers_active[i].store(0);
+        }
 
     }
 
@@ -39,11 +43,14 @@ public:
     bool push1(T& new_value){
         if(size_.load() >= max_size){
             if(readers_active[latest_write_pos] > 0){
+//                std::cout << "[Push1]: readers_active[latest_write_pos] = " << readers_active[latest_write_pos] << "\n";
+//                printf("[Push1]: readers_active[latest_write_pos] = %d\n", readers_active[latest_write_pos]);
                 return false;
             }
             else{
                 writers_active[latest_write_pos].fetch_add(1);
                 buffer[latest_write_pos] = new_value;
+                printf("[Push1]: latest_write_pos = %d, Addr Ptr = %p\n", latest_write_pos, buffer[latest_write_pos].Ptr);
                 writers_active[latest_write_pos].fetch_sub(1);
                 return true;
             }
@@ -58,6 +65,7 @@ public:
         writers_active[write_pos].fetch_add(1);
 
         buffer[write_pos] = new_value;
+        printf("[Push1]: write_pos = %d, Addr Ptr = %p\n", write_pos, buffer[write_pos].Ptr);
         size_.fetch_add(1);
         writers_active[write_pos].fetch_sub(1);
         latest_write_pos = write_pos;
@@ -71,29 +79,36 @@ public:
 
     // multi readers must read same data at the same time
     // they share the same read_pos
-    bool front1(T& value, int& r_pos){
+    int front1(T& value){
         while(size_.load() == 0){
-
         }
-        while(writers_active[read_pos].load() > 0);
-        if(r_pos == read_pos)
-            return false;
+        while(writers_active[read_pos].load() > 0){
+            std::cout << "=========[Front1]: writers_active = " << writers_active[read_pos].load() << "\n";
+        }
+        if(latest_read_pos == read_pos)
+            return -1;
+        printf("[Front1]: read_pos = %d\n", read_pos);
         readers_active[read_pos].fetch_add(1);
         value = buffer[read_pos];
-        r_pos = read_pos;
-        return true;
+        latest_read_pos = read_pos;
+        readers_active[read_pos].fetch_add(1);
+        return latest_read_pos;
         //read_flag.store(false);
     }
     // pop1 correspond to front1
     bool pop1(){
-        if(readers_active[read_pos].load() == n_out){
+        if(readers_active[read_pos].load() == 2*n_out){
+            printf("========[Pop1]: Multi Readers Finished read\n");
             readers_active[read_pos].store(0);
             size_.fetch_sub(1);
             read_pos = (read_pos + 1) % max_size;
             return true;
            // read_flag.store(true);
         }
-        return false;
+        else{
+            std::cout << "=========[Pop1]: readers_active[" << read_pos << "] = " << readers_active[read_pos].load() << "\n";
+            return false;
+        }
 
     }
 
@@ -122,6 +137,7 @@ public:
     int write_pos = 0;
     int read_pos = 0;
     int latest_write_pos = -1;
+    int latest_read_pos = -1;
     int n_in, n_out;
     size_t max_size;
 //    int max_size;

@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include "Matrix.h"
 #include "LockBuffer.h"
+#include <thread>
+#include <chrono>
+
 using namespace std;
 //template<typename T, int max_size>
 class Writer{
@@ -13,7 +16,7 @@ class Writer{
     Writer(LockBuffer<Matrix<unsigned char>>& _v4l2Buff, string _fileName)
         : v4l2Buff(_v4l2Buff), fileName(_fileName)
     {
-
+        mat.create(480, 640);
     }
     ~Writer(){
 
@@ -46,7 +49,7 @@ class Writer{
     }
 
     void run(){
-        if(videoFile != ""){
+        if(fileName != ""){
             cap.open(fileName);
             cv::Mat frame;
             std::chrono::high_resolution_clock::time_point start, stop;
@@ -66,26 +69,24 @@ class Writer{
         //        cv::imshow("img", frame);
         //        cv::waitKey(1);
                 cv::cvtColor(frame, frame, cv::COLOR_RGB2GRAY);
-                cv::Mat frame1 = frame.clone();
+                cv::resize(frame, frame, cv::Size(640, 480), 0, 0, cv::INTER_LINEAR);
+                mat.copyFrom(frame.data);
+//                printf("[Writer]: Addr Of Ptr = %p\n", mat.Ptr);
+                v4l2Buff.push1(mat);
+//                printf("[Writer]: Addr Of Ptr = %p\n", mat.Ptr);
+                std::cout << "[Writer]: v4l2Buff Size = " << v4l2Buff.size_.load() << "\n";
+                std::this_thread::sleep_for(chrono::milliseconds(10));
                 stop = std::chrono::high_resolution_clock::now();
                 std::cout << "Time read = " << std::chrono::duration_cast<std::chrono::microseconds>(stop-start).count()/1000.0 << std::endl;
+
             }
         }
-        cout << "[Writer]:\n";
-        std::cout << "max buffer size = " << v4l2Buff.capacity() << "\n";
-        for(int i = 0; i < v4l2Buff.capacity(); i++){
-            printf("Addr Of buffer[%d] = %p\n", i, v4l2Buff.buffer[i].Ptr);
-            printf("rows = %d, cols = %d, size = %d\n", v4l2Buff.buffer[i].rows, v4l2Buff.buffer[i].cols, v4l2Buff.buffer[i].size_);
-
-        }
-        std::cout << "n_in = " << v4l2Buff.n_in << " n_out = " << v4l2Buff.n_out << std::endl;
-        std::cout << "readers_active size = " << v4l2Buff.readers_active.size() << std::endl;
 
     }
 public:
     cv::VideoCapture cap;
     std::string fileName;
-
+    Matrix<unsigned char> mat;
     LockBuffer<Matrix<unsigned char>>& v4l2Buff;
 };
 #endif // WRITER_H
