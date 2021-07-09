@@ -127,7 +127,8 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		Matrix.h \
 		Writer.h \
 		Reader1.h \
-		Reader2.h ../main.cpp \
+		Reader2.h \
+		Reader3.h ../main.cpp \
 		../testLockBuff.cpp
 QMAKE_TARGET  = MultiThreadDataStruct
 DESTDIR       = 
@@ -329,7 +330,8 @@ testLockBuff.o: ../testLockBuff.cpp ../Matrix.h \
 		../LockBuffer.h \
 		../Writer.h \
 		../Reader1.h \
-		../Reader2.h
+		../Reader2.h \
+		../Reader3.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o testLockBuff.o ../testLockBuff.cpp
 
 ####### Install

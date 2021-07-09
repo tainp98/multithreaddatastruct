@@ -28,9 +28,11 @@ class Reader1{
 //        }
 //        std::cout << "n_in = " << v4l2Buff.n_in << " n_out = " << v4l2Buff.n_out << std::endl;
 //        std::cout << "readers_active size = " << v4l2Buff.readers_active.size() << std::endl;
+        chrono::high_resolution_clock::time_point start, stop;
         while(true){
-            printf("[Reader1]: read_pos = %d\n", read_pos);
-            while((read_pos = v4l2Buff.front1(mat)) == -1){
+//            printf("[Reader1]: read_pos = %d\n", latest_read_pos);
+            start = chrono::high_resolution_clock::now();
+            while(v4l2Buff.front1(mat, latest_read_pos) == false){
 //                printf("[Reader1]: In while\n");
 //                this_thread::sleep_for(chrono::milliseconds(1));
             }
@@ -40,6 +42,8 @@ class Reader1{
 //            cv::imshow("Reader1", img);
 //            cv::waitKey(7);
             this_thread::sleep_for(chrono::milliseconds(5));
+            stop = chrono::high_resolution_clock::now();
+            std::cout << "==========[Reader1]: Time = " << chrono::duration_cast<chrono::microseconds>(stop-start).count()/1000.0 << "\n";
         }
 
     }
@@ -47,6 +51,6 @@ class Reader1{
 private:
     LockBuffer<Matrix<unsigned char>>& v4l2Buff;
     Matrix<unsigned char> mat;
-    int read_pos = -1;
+    int latest_read_pos = -1;
 };
 #endif // READER1_H

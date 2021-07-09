@@ -14,7 +14,8 @@ HEADERS += \
     Matrix.h \
     Writer.h \
     Reader1.h \
-    Reader2.h
+    Reader2.h \
+    Reader3.h
 
 ## opencv  4
 LIBS += `pkg-config --libs opencv4`

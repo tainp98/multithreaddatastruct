@@ -88,7 +88,7 @@ class Matrix {
     // Copy Constructor
     Matrix(const Matrix& other){
         try{
-            std::cout << "====> Copy Constructor\n";
+//            std::cout << "====> Copy Constructor\n";
             if(other.Ptr == nullptr)
                 throw std::bad_alloc();
             rows = other.rows;
@@ -120,7 +120,7 @@ class Matrix {
     // Copy Assignment
     auto operator =(const Matrix& other) -> decltype(*this){
         try{
-            printf("====> Copy Assignment\n");
+//            printf("====> Copy Assignment\n");
             if(other.Ptr == nullptr){
                 throw std::bad_alloc();
             }

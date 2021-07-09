@@ -3,10 +3,11 @@
 #include "Writer.h"
 #include "Reader1.h"
 #include "Reader2.h"
+#include "Reader3.h"
 #include <thread>
 
 int main(int argc, char* argv[]){
-    LockBuffer<Matrix<unsigned char>> buffer(10, 1, 2);
+    LockBuffer<Matrix<unsigned char>> buffer(4, 1, 3);
     buffer.AllocatorBuffer(Matrix<unsigned char>(480, 640));
 //    std::cout << "max buffer size = " << buffer.capacity() << "\n";
 //    for(int i = 0; i < buffer.capacity(); i++){
@@ -24,7 +25,10 @@ int main(int argc, char* argv[]){
     std::thread t_reader1(&Reader1::run, &reader1);
     Reader2 reader2(buffer);
     std::thread t_reader2(&Reader2::run, &reader2);
+    Reader3 reader3(buffer);
+    std::thread t_reader3(&Reader3::run, &reader3);
     t_writer.join();
     t_reader1.join();
     t_reader2.join();
+    t_reader3.join();
 }

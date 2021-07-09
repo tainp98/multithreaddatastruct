@@ -74,10 +74,10 @@ class Writer{
 //                printf("[Writer]: Addr Of Ptr = %p\n", mat.Ptr);
                 v4l2Buff.push1(mat);
 //                printf("[Writer]: Addr Of Ptr = %p\n", mat.Ptr);
-                std::cout << "[Writer]: v4l2Buff Size = " << v4l2Buff.size_.load() << "\n";
+//                std::cout << "[Writer]: v4l2Buff Size = " << v4l2Buff.size_.load() << "\n";
                 std::this_thread::sleep_for(chrono::milliseconds(10));
                 stop = std::chrono::high_resolution_clock::now();
-                std::cout << "Time read = " << std::chrono::duration_cast<std::chrono::microseconds>(stop-start).count()/1000.0 << std::endl;
+//                std::cout << "Time read = " << std::chrono::duration_cast<std::chrono::microseconds>(stop-start).count()/1000.0 << std::endl;
 
             }
         }
